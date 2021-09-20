@@ -1,0 +1,36 @@
+version: "3.8"                                                 
+services:                                                      
+  website:
+    depends_on:                                                
+      - api 
+    image: php:apache
+    volumes:                                                   
+      - ./website:/var/www/html 
+    environment:                                               
+      USERNAME: toto                                           
+      PASSWORD: python
+    ports:                                                     
+      - "80:80"
+
+  api:
+    image: student_age:latest
+    volumes:                                                   
+      - ./simple_api/student_age.json:/data/student_age.json
+ 
+  registry:
+    image: registry:2
+    volumes:
+      - ./registry-data:/var/lib/registry
+
+  ui:
+    image: joxit/docker-registry-ui:1.5-static
+    ports:
+      - "8080:80"
+    environment:
+      - REGISTRY_TITLE=Atos Docker Registry
+      - REGISTRY_URL=http://registry:5000
+    depends_on:
+      - registry
+
+
+ 

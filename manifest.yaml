@@ -1,0 +1,163 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pozos
+---
+apiVersion: v1
+data:
+  student_age.json: |
+    {
+        "bob": "13",
+        "alice": "12"
+    }
+kind: ConfigMap
+metadata:
+  name: student-config
+  namespace: pozos
+---
+apiVersion: v1
+data:
+  index.php: |2
+
+    <html>
+        <head>
+            <title>POZOS</title>
+        </head>
+
+        <body>
+            <h1>Student Checking App</h1>
+            <ul>
+                <form action="" method="POST">
+                <!--<label>Enter student name:</label><br />
+                <input type="text" name="" placeholder="Student Name" required/>
+                <br /><br />-->
+                <button type="submit" name="submit">List Student</button>
+                </form>
+
+                <?php
+                  if($_SERVER['REQUEST_METHOD'] == "POST" and isset($_POST['submit']))
+                  {
+                  $username = getenv('USERNAME');
+                  $password = getenv('PASSWORD');
+                  if ( empty($username) ) $username = 'fake_username';
+                  if ( empty($password) ) $password = 'fake_password';
+                  $context = stream_context_create(array(
+                    "http" => array(
+                    "header" => "Authorization: Basic " . base64_encode("$username:$password"),
+                  )));
+
+                  $url = 'http://api:5000/pozos/api/v1.0/get_student_ages';
+                  $list = json_decode(file_get_contents($url, false, $context), true);
+                  echo "<p style='color:red;; font-size: 20px;'>This is the list of the student with age</p>";
+                  foreach($list["student_ages"] as $key => $value) {
+                      echo "- $key are $value years old <br>";
+                  }
+                 }
+                ?>
+            </ul>
+        </body>
+    </html>
+kind: ConfigMap
+metadata:
+  name: index-php
+  namespace: pozos
+---
+apiVersion: v1
+data:
+  PASSWORD: cHl0aG9u
+  USERNAME: dG90bw==
+kind: Secret
+metadata:
+  name: student-creds
+  namespace: pozos
+type: Opaque
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: api
+  name: api
+  namespace: pozos
+spec:
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+      - image: localhost:8080/student_age:latest
+        name: api
+        ports:
+        - containerPort: 5000
+        volumeMounts:
+        - mountPath: /data
+          name: student-list
+      volumes:
+      - configMap:
+          name: student-config
+        name: student-list
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: website
+  namespace: pozos
+  labels:
+    app: website
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: website
+  template:
+    metadata:
+      labels:
+        app: website
+    spec:
+      containers:
+      - name: website
+        image: php:apache
+        envFrom:
+        - secretRef:
+            name: student-creds              
+        ports:
+        - containerPort: 80
+        volumeMounts:
+          - name: index-file
+            mountPath: /var/www/html
+      volumes:
+      - name: index-file
+        configMap:
+          name: index-php
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: pozos
+spec:
+  type: ClusterIP
+  selector:
+    app: api
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: website
+  namespace: pozos
+spec:
+  type: NodePort
+  selector:
+    app: website
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80

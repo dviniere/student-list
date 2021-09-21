@@ -1,21 +1,21 @@
 version: "3.8"                                                 
 services:                                                      
-  website:
-    depends_on:                                                
-      - api 
-    image: php:apache
-    volumes:                                                   
-      - ./website:/var/www/html 
-    environment:                                               
-      USERNAME: toto                                           
-      PASSWORD: python
-    ports:                                                     
-      - "80:80"
-
-  api:
-    image: student_age:latest
-    volumes:                                                   
-      - ./simple_api/student_age.json:/data/student_age.json
+# website:
+#   depends_on:                                                
+#     - api 
+#   image: php:apache
+#   volumes:                                                   
+#     - ./website:/var/www/html 
+#   environment:                                               
+#     USERNAME: toto                                           
+#     PASSWORD: python
+#   ports:                                                     
+#     - "80:80"
+#
+# api:
+#   image: student_age:latest
+#   volumes:                                                   
+#     - ./simple_api/student_age.json:/data/student_age.json
  
   registry:
     image: registry:2

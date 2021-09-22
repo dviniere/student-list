@@ -89,7 +89,7 @@ spec:
         app: api
     spec:
       containers:
-      - image: localhost:8080/student_age:latest
+      - image: dviniere/student_age:latest
         name: api
         ports:
         - containerPort: 5000

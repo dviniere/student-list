@@ -30,7 +30,7 @@
 - name: Deliver Image
   block:
     - name: Login to dockerhub
-      command: docker login -u {{ DOCKER_USERNAME }} -p 6afa2a75-f20d-4e88-880c-e568c8478856
+      command: docker login -u {{ DOCKER_USERNAME }} -p {{ docker_pass }}
     - name: Tag student_age image
       command: docker tag student_age {{ DOCKER_USERNAME }}/student_age
     - name: Push student_age image

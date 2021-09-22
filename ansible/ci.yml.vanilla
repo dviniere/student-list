@@ -3,7 +3,9 @@
   gather_facts: true
   become: yes
   vars:
+    IMAGE_NAME: student_age
     DOCKER_USERNAME: dviniere
+    GIT_REPO: https://github.com/dviniere/student-list.git
  
   tasks:
     - name: Gather Source
@@ -14,34 +16,34 @@
           state: present
       - name: Clone Repo
         ansible.builtin.git:
-          repo: 'https://github.com/dviniere/student-list.git'
+          repo: {{ GIT_REPO }}
           dest: /home/vagrant/student-list
       tags: source
       
     - name: Build Image
-      command: docker build -t student_age /home/vagrant/student-list/simple_api
+      command: docker build -t {{ IMAGE_NAME }} /home/vagrant/student-list/simple_api
       tags: build
       
     - name: Test Image
       block:
-        - name: Run student_age
-          command: docker run -d --name student_age -p 5000:5000 -v /home/vagrant/student-list/simple_api/student_age.json:/data/student_age.json student_age
+        - name: Run {{ IMAGE_NAME }}
+          command: docker run -d --name {{ IMAGE_NAME }} -p 5000:5000 -v /home/vagrant/student-list/simple_api/student_age.json:/data/student_age.json {{ IMAGE_NAME }}
         - name: Curl API
           command: curl -u toto:python -X GET http://localhost:5000/pozos/api/v1.0/get_student_ages    
-        - name: Stop student_age
-          command: docker stop student_age 
-        - name: Remove student_age
-          command: docker rm student_age
+        - name: Stop {{ IMAGE_NAME }}
+          command: docker stop {{ IMAGE_NAME }} 
+        - name: Remove {{ IMAGE_NAME }}
+          command: docker rm {{ IMAGE_NAME }}
       tags: test
       
     - name: Deliver Image
       block:
         - name: Login to dockerhub
           command: docker login -u {{ DOCKER_USERNAME }} -p {{ docker_pass }}
-        - name: Tag student_age image
-          command: docker tag student_age {{ DOCKER_USERNAME }}/student_age
-        - name: Push student_age image
-          command: docker push {{ DOCKER_USERNAME }}/student_age
+        - name: Tag {{ IMAGE_NAME }} image
+          command: docker tag {{ IMAGE_NAME }} {{ DOCKER_USERNAME }}/{{ IMAGE_NAME }}
+        - name: Push {{ IMAGE_NAME }} image
+          command: docker push {{ DOCKER_USERNAME }}/{{ IMAGE_NAME }}
         - name: Logout
           command: docker logout
       tags: delivery
@@ -51,5 +53,5 @@
         - name: Remove source
           command: rm -rf /home/vagrant/student-list
         - name: Remove images
-          command: docker rmi {{ DOCKER_USERNAME }}/student_age student_age
+          command: docker rmi {{ DOCKER_USERNAME }}/{{ IMAGE_NAME }} {{ IMAGE_NAME }}
       tags: clean

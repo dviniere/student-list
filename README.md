@@ -1,4 +1,4 @@
-### Credit to https://github.com/diranetafen 
+### Model from https://github.com/diranetafen 
 
 ------------
 

@@ -1,0 +1,6 @@
+- name: CI Chain
+  hosts: ci
+  gather_facts: true
+  become: yes
+  roles:
+    - ci

@@ -1,0 +1,6 @@
+- name: CD Chain
+  hosts: cd
+  gather_facts: true
+  become: yes
+  roles:
+    - cd

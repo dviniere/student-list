@@ -1,0 +1,48 @@
+# tasks file for ci
+- name: Gather Source
+  block:
+  - name: Install Git
+    package:
+      name: git
+      state: present
+  - name: Clone Repo
+    ansible.builtin.git:
+      repo: 'https://github.com/dviniere/student-list.git'
+      dest: /home/vagrant/student-list
+  tags: source
+  
+- name: Build Image
+  command: docker build -t student_age /home/vagrant/student-list/simple_api
+  tags: build
+  
+- name: Test Image
+  block:
+    - name: Run student_age
+      command: docker run -d --name student_age -p 5000:5000 -v /home/vagrant/student-list/simple_api/student_age.json:/data/student_age.json student_age
+    - name: Curl API
+      command: curl -u toto:python -X GET http://localhost:5000/pozos/api/v1.0/get_student_ages    
+    - name: Stop student_age
+      command: docker stop student_age 
+    - name: Remove student_age
+      command: docker rm student_age
+  tags: test
+  
+- name: Deliver Image
+  block:
+    - name: Login to dockerhub
+      command: docker login -u dvinierem2i -p 6afa2a75-f20d-4e88-880c-e568c8478856
+    - name: Tag student_age image
+      command: docker tag student_age dvinierem2i/student_age
+    - name: Push student_age image
+      command: docker push dvinierem2i/student_age
+    - name: Logout
+      command: docker logout
+  tags: delivery
+
+- name: Clean Up
+  block:
+    - name: Remove source
+      command: rm -rf /home/vagrant/student-list
+    - name: Remove images
+      command: docker rmi dvinierem2i/student_age student_age
+  tags: delivery

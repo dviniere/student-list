@@ -1,0 +1,39 @@
+# tasks file for cd
+- name: Gather Source
+  block:
+  - name: Install Git
+    package:
+      name: git
+      state: present
+  - name: Clone Repo
+    ansible.builtin.git:
+      repo: 'https://github.com/dviniere/student-list.git'
+      dest: /home/vagrant/student-list
+  tags: source    
+ 
+- name: Deploy solution
+  command: kubectl --kubeconfig /home/vagrant/.kube/config apply -f /home/vagrant/student-list/manifest.yaml
+
+- name: Clean Up
+  block:
+    - name: Remove source
+      command: rm -rf /home/vagrant/student-list
+  tags: clean 
+  
+- name: Clean Deployment
+  block:
+  - name: Install Git
+    package:
+      name: git
+      state: present
+  - name: Clone Repo
+    ansible.builtin.git:
+      repo: 'https://github.com/dviniere/student-list.git'
+      dest: /home/vagrant/student-list
+  - name: Clean Deployment
+    command: kubectl --kubeconfig /home/vagrant/.kube/config delete -f /home/vagrant/student-list/manifest.yaml
+  - name: Remove source
+    command: rm -rf /home/vagrant/student-list
+  tags: 
+    - never
+    - cleandeploy
